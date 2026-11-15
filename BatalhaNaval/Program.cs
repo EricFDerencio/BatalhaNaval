@@ -5,12 +5,14 @@ const int TAMANHO_CRUZADOR = 3;
 const int TAMANHO_SUBMARINO = 2;
 const int TAMANHO_DESTROYER = 1;
 
+const int TOTAL_PARTES_NAVIOS = TAMANHO_ENCOURACADO + TAMANHO_CRUZADOR + TAMANHO_SUBMARINO + TAMANHO_DESTROYER;
+const int TIRO_AGUA = -9;
+
 int[,] campoJogador = new int[TAMANHO_CAMPO, TAMANHO_CAMPO];
 int[,] campoMaquina = new int[TAMANHO_CAMPO, TAMANHO_CAMPO];
 
 int[] tamanhosNavios = { TAMANHO_ENCOURACADO, TAMANHO_CRUZADOR, TAMANHO_SUBMARINO, TAMANHO_DESTROYER };
 string[] nomesNavios = { "Encouraçado", "Cruzador", "Submarino", "Destroyer" };
-
 
 
 
@@ -45,7 +47,7 @@ bool PodePosicionar(int[,] matriz, int linha, int coluna, int tamanho, bool hori
 
     return true;
 }
-void ExibirCampo(int[,] matriz)
+void ExibirCampo(int[,] matriz, bool mostrarNavios)
 {
     Console.Write("    ");
     for (int coluna = 0; coluna < TAMANHO_CAMPO; coluna++)
@@ -59,13 +61,28 @@ void ExibirCampo(int[,] matriz)
         Console.Write($"{linha + 1,2}  ");
         for (int coluna = 0; coluna < TAMANHO_CAMPO; coluna++)
         {
-            string simbolo = matriz[linha, coluna] == 0 ? "~" : matriz[linha, coluna].ToString();
+            string simbolo = "~";
+
+            if (matriz[linha, coluna] == TIRO_AGUA)
+            {
+                simbolo = "o";
+            }
+            else if (matriz[linha, coluna] < 0)
+            {
+                simbolo = "X";
+            }
+            else if (mostrarNavios && matriz[linha, coluna] > 0)
+            {
+                simbolo = matriz[linha, coluna].ToString();
+            }
+
             Console.Write($"{simbolo,2} ");
         }
         Console.WriteLine();
     }
     Console.WriteLine();
 }
+
 int[,] PosicionarNavio(int[,] matriz, int linha, int coluna, int tamanho, bool horizontal)
 {
     for (int i = 0; i < tamanho; i++)
@@ -97,7 +114,7 @@ int[,] PopularCampoAleatorio(int[,] matriz)
 
         do
         {
-            int linha = Random.Shared.Next (TAMANHO_CAMPO);
+            int linha = Random.Shared.Next(TAMANHO_CAMPO);
             int coluna = Random.Shared.Next(TAMANHO_CAMPO);
             bool horizontal = Random.Shared.Next(2) == 0;
 
@@ -111,6 +128,7 @@ int[,] PopularCampoAleatorio(int[,] matriz)
 
     return matriz;
 }
+
 int[,] PopularCampoManual(int[,] matriz)
 {
     for (int navio = 0; navio < tamanhosNavios.Length; navio++)
@@ -119,7 +137,7 @@ int[,] PopularCampoManual(int[,] matriz)
 
         do
         {
-            ExibirCampo(matriz);
+            ExibirCampo(matriz, true);
             Console.WriteLine($"Posicionando {nomesNavios[navio]} (tamanho {tamanhosNavios[navio]})");
 
             int linha;
@@ -161,6 +179,98 @@ int[,] PopularCampoManual(int[,] matriz)
 
     return matriz;
 }
+bool Atirar(int[,] matriz, int linha, int coluna)
+{
+    if (matriz[linha, coluna] > 0)
+    {
+        matriz[linha, coluna] = -matriz[linha, coluna];
+        Console.WriteLine("Acertou!\n");
+        return true;
+    }
+
+    matriz[linha, coluna] = TIRO_AGUA;
+    Console.WriteLine("Água!\n");
+    return false;
+}
+
+bool TurnoJogador(int[,] matriz)
+{
+    int linha;
+    int coluna;
+
+    do
+    {
+        do
+        {
+            Console.Write($"Linha do tiro (1-{TAMANHO_CAMPO}): ");
+        } while (!int.TryParse(Console.ReadLine(), out linha) || linha < 1 || linha > TAMANHO_CAMPO);
+
+        do
+        {
+            Console.Write($"Coluna do tiro (1-{TAMANHO_CAMPO}): ");
+        } while (!int.TryParse(Console.ReadLine(), out coluna) || coluna < 1 || coluna > TAMANHO_CAMPO);
+
+        linha--;
+        coluna--;
+
+        if (matriz[linha, coluna] < 0)
+        {
+            Console.WriteLine("Você já atirou nessa posição! Escolha outra.\n");
+        }
+    } while (matriz[linha, coluna] < 0);
+
+    return Atirar(matriz, linha, coluna);
+}
+
+bool TurnoMaquina(int[,] matriz)
+{
+    int linha;
+    int coluna;
+
+    do
+    {
+        linha = Random.Shared.Next(TAMANHO_CAMPO);
+        coluna = Random.Shared.Next(TAMANHO_CAMPO);
+    } while (matriz[linha, coluna] < 0);
+
+    Console.WriteLine($"A máquina atirou na linha {linha + 1}, coluna {coluna + 1}.");
+
+    return Atirar(matriz, linha, coluna);
+}
+
+void IniciarJogo(int[,] matrizJogador, int[,] matrizMaquina)
+{
+    int acertosJogador = 0;
+    int acertosMaquina = 0;
+
+    do
+    {
+        Console.WriteLine("===== CAMPO DA MÁQUINA =====");
+        ExibirCampo(matrizMaquina, false);
+
+        Console.WriteLine("===== SEU CAMPO =====");
+        ExibirCampo(matrizJogador, true);
+
+        if (TurnoJogador(matrizMaquina))
+        {
+            acertosJogador++;
+        }
+
+        if (acertosJogador < TOTAL_PARTES_NAVIOS && TurnoMaquina(matrizJogador))
+        {
+            acertosMaquina++;
+        }
+    } while (acertosJogador < TOTAL_PARTES_NAVIOS && acertosMaquina < TOTAL_PARTES_NAVIOS);
+
+    if (acertosJogador == TOTAL_PARTES_NAVIOS)
+    {
+        Console.WriteLine("Parabéns, você venceu!\n");
+    }
+    else
+    {
+        Console.WriteLine("A máquina venceu!\n");
+    }
+}
 
 int opcao;
 
@@ -182,17 +292,13 @@ do
         case 1:
             campoJogador = PopularCampoAleatorio(new int[TAMANHO_CAMPO, TAMANHO_CAMPO]);
             campoMaquina = PopularCampoAleatorio(new int[TAMANHO_CAMPO, TAMANHO_CAMPO]);
-            Console.WriteLine("\nSeu campo:");
-            ExibirCampo(campoJogador);
-            // próximo passo: IniciarJogo(campoJogador, campoMaquina);
+            IniciarJogo(campoJogador, campoMaquina);
             break;
 
         case 2:
             campoJogador = PopularCampoManual(new int[TAMANHO_CAMPO, TAMANHO_CAMPO]);
             campoMaquina = PopularCampoAleatorio(new int[TAMANHO_CAMPO, TAMANHO_CAMPO]);
-            Console.WriteLine("\nSeu campo:");
-            ExibirCampo(campoJogador);
-            // próximo passo: IniciarJogo(campoJogador, campoMaquina);
+            IniciarJogo(campoJogador, campoMaquina);
             break;
 
         case 0:
