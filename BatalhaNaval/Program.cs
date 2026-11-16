@@ -1,4 +1,4 @@
-﻿const int TAMANHO_CAMPO = 10;
+﻿const int TAMANHO_CAMPO = 6;
 
 const int TAMANHO_ENCOURACADO = 4;
 const int TAMANHO_CRUZADOR = 3;
@@ -13,8 +13,6 @@ int[,] campoMaquina = new int[TAMANHO_CAMPO, TAMANHO_CAMPO];
 
 int[] tamanhosNavios = { TAMANHO_ENCOURACADO, TAMANHO_CRUZADOR, TAMANHO_SUBMARINO, TAMANHO_DESTROYER };
 string[] nomesNavios = { "Encouraçado", "Cruzador", "Submarino", "Destroyer" };
-
-
 
 bool PodePosicionar(int[,] matriz, int linha, int coluna, int tamanho, bool horizontal)
 {
@@ -61,28 +59,33 @@ void ExibirCampo(int[,] matriz, bool mostrarNavios)
         Console.Write($"{linha + 1,2}  ");
         for (int coluna = 0; coluna < TAMANHO_CAMPO; coluna++)
         {
+            Console.ForegroundColor = ConsoleColor.Blue;
             string simbolo = "~";
+            
 
             if (matriz[linha, coluna] == TIRO_AGUA)
             {
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 simbolo = "o";
             }
             else if (matriz[linha, coluna] < 0)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 simbolo = "X";
             }
             else if (mostrarNavios && matriz[linha, coluna] > 0)
             {
+                Console.ForegroundColor = ConsoleColor.White;
                 simbolo = matriz[linha, coluna].ToString();
             }
-
+      
             Console.Write($"{simbolo,2} ");
+            Console.ForegroundColor = ConsoleColor.White;
         }
         Console.WriteLine();
     }
     Console.WriteLine();
 }
-
 int[,] PosicionarNavio(int[,] matriz, int linha, int coluna, int tamanho, bool horizontal)
 {
     for (int i = 0; i < tamanho; i++)
@@ -128,7 +131,6 @@ int[,] PopularCampoAleatorio(int[,] matriz)
 
     return matriz;
 }
-
 int[,] PopularCampoManual(int[,] matriz)
 {
     for (int navio = 0; navio < tamanhosNavios.Length; navio++)
@@ -192,7 +194,6 @@ bool Atirar(int[,] matriz, int linha, int coluna)
     Console.WriteLine("Água!\n");
     return false;
 }
-
 bool TurnoJogador(int[,] matriz)
 {
     int linha;
@@ -221,7 +222,6 @@ bool TurnoJogador(int[,] matriz)
 
     return Atirar(matriz, linha, coluna);
 }
-
 bool TurnoMaquina(int[,] matriz)
 {
     int linha;
@@ -237,7 +237,6 @@ bool TurnoMaquina(int[,] matriz)
 
     return Atirar(matriz, linha, coluna);
 }
-
 void IniciarJogo(int[,] matrizJogador, int[,] matrizMaquina)
 {
     int acertosJogador = 0;
